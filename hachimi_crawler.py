@@ -85,18 +85,18 @@ try:
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36 Edg/92.0.902.67"
             ]
             self.headers = self._get_random_headers()
-            self.output_dir = "C:/proj/BBDown/hachimi_videos"
+            self.output_dir = "hachimi_videos"  # Use relative path
             self.max_duration = 600  # 10 minutes in seconds
             self.search_keyword = "哈基米"
-            self.csv_file = "C:/proj/BBDown/hachimi_videos/video_info.csv"
-            self.ffmpeg_path = "C:/proj/BBDown/ffmpeg-7.1.1-full_build/bin/ffmpeg.exe"
-            self.bbdown_path = "C:/proj/BBDown/BBDown.exe"
+            self.csv_file = os.path.join(self.output_dir, "video_info.csv") # Path becomes relative due to self.output_dir
+            self.ffmpeg_path = os.path.join("ffmpeg-7.1.1-full_build", "bin", "ffmpeg.exe") # Use relative path
+            self.bbdown_path = "BBDown.exe"  # Use relative path, expects BBDown.exe in CWD or PATH
             self.max_retries = 3
             self.min_view_count = 500  # 修改为500播放量起步
-            self.failed_csv_file = "C:/proj/BBDown/hachimi_videos/failed_downloads.csv"
+            self.failed_csv_file = os.path.join(self.output_dir, "failed_downloads.csv") # Path becomes relative due to self.output_dir
             
             # 会话状态保存路径
-            self.session_file = "C:/proj/BBDown/bili_session.pickle"
+            self.session_file = "bili_session.pickle" # Use relative path, stored in CWD
             
             # 登录状态
             self.is_logged_in = False
@@ -1775,7 +1775,7 @@ try:
                 print("未提供SESSDATA，操作取消")
                 return False
                 
-            session_file = "C:/proj/BBDown/bili_session.pickle"
+            session_file = "bili_session.pickle" # Use relative path
             
             session_data = {
                 'cookies': {

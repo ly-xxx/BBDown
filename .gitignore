@@ -299,6 +299,19 @@ node_modules/
 # Visual Studio 6 auto-generated workspace file (contains which files were open etc.)
 *.vbw
 
+# Visual Studio 6 auto-generated project file (contains which files were open etc.)
+*.vbp
+
+# Visual Studio 6 auto-generated project file (contains which files were open etc.)
+*.dsp
+
+# Visual Studio 6 workspace and project file (working project files containing files to include in project)
+*.dsw
+
+# Visual Studio 6 technical files
+*.ncb
+*.aps
+
 # Visual Studio LightSwitch build output
 **/*.HTMLClient/GeneratedArtifacts
 **/*.DesktopClient/GeneratedArtifacts
@@ -355,6 +368,9 @@ ASALocalRun/
 # Local History for Visual Studio
 .localhistory/
 
+# Visual Studio History (VSHistory) files
+.vshistory/
+
 # BeatPulse healthcheck temp database
 healthchecksdb
 
@@ -367,26 +383,32 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# debug log
-debug_*.json
+# VS Code files for those working with multiple tools
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
 
-# dotnet run in `BBDown/` sub folder
-/BBDown/*.mp4
-/BBDown/*.xml
-/BBDown/*.ass
+# Local History for Visual Studio Code
+.history/
 
-# Video files
+# Windows Installer files from build outputs
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# JetBrains Rider
+*.sln.iml
+
+# Custom ignores
 hachimi_videos/
-*.mp4
-*.flv
-*.mkv
-*.avi
-*.mov
-
-# Bilibili session files
 bili_session.pickle
 
-# Log files
-*.log
-crawler_log.txt
-bili_session.pickle
+# Ignore ffmpeg binaries but keep the directory structure
+ffmpeg-7.1.1-full_build/bin/*.exe
+ffmpeg-7.1.1-full_build/bin/*.dll
+ffmpeg-7.1.1-full_build/bin/*.pdb

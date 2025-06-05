@@ -25,13 +25,25 @@
 - Python 3.7+
 - 依赖库：asyncio, json, os, csv, requests, subprocess, glob, random, time
 - BBDown (`BBDown.exe`, 需与脚本在同一目录或在系统PATH中)
-- ffmpeg (`ffmpeg-7.1.1-full_build/bin/ffmpeg.exe`, 相对于脚本的路径)
+- ffmpeg (需要下载并解压到 `ffmpeg-7.1.1-full_build` 目录)
 
 ### 安装依赖
 
 ```bash
 pip install -r requirements.txt
 ```
+
+### 安装 ffmpeg
+
+1. 下载 ffmpeg 7.1.1 完整构建版本：
+   - Windows: [ffmpeg-7.1.1-full_build.zip](https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip)
+   - 下载后解压到项目根目录下的 `ffmpeg-7.1.1-full_build` 文件夹
+   - 确保 `ffmpeg.exe` 位于 `ffmpeg-7.1.1-full_build/bin/` 目录下
+
+2. 验证安装：
+   ```bash
+   ffmpeg-7.1.1-full_build/bin/ffmpeg.exe -version
+   ```
 
 ### 运行爬虫
 

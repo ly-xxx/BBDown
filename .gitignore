@@ -382,3 +382,10 @@ hachimi_videos/
 *.mkv
 *.avi
 *.mov
+
+# Bilibili session files
+bili_session.pickle
+
+# Log files
+*.log
+crawler_log.txt

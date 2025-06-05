@@ -406,8 +406,8 @@ try:
                     # 检查是否有SESSDATA
                     if 'SESSDATA' in cookies_data:
                         sessdata = cookies_data['SESSDATA']
-                        # 打印SESSDATA的前10个字符作为调试信息
-                        self.log(f"找到SESSDATA: {sessdata[:10]}...")
+                        # 不再打印SESSDATA的任何部分
+                        self.log("找到SESSDATA并成功加载")
                         self.session.cookies.set('SESSDATA', sessdata, domain='.bilibili.com')
                         self.log("成功加载SESSDATA到会话")
                     else:

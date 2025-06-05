@@ -389,3 +389,4 @@ bili_session.pickle
 # Log files
 *.log
 crawler_log.txt
+bili_session.pickle

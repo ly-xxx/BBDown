@@ -28,7 +28,7 @@ def print_progress(current, total, title, length=50):
         print()
 
 # 生成按周的时间范围
-def generate_weekly_ranges(start_date_str="2023-04-22", end_date_str="2025-06-06"):
+def generate_weekly_ranges(start_date_str, end_date_str):
     """生成从起始日期到结束日期的每周时间戳范围"""
     # 将字符串转换为日期对象
     start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
@@ -98,11 +98,15 @@ try:
             # 会话状态保存路径
             self.session_file = "bili_session.pickle" # Use relative path, stored in CWD
             
+            # ！！！！！！！！1改时间在这改
+            self.start_date = "2024-08-24"  # Default start date
+            self.end_date = "2025-06-06"    # Default end date
+            
             # 登录状态
             self.is_logged_in = False
             
             # 获取时间范围
-            self.weekly_ranges = generate_weekly_ranges()
+            self.weekly_ranges = generate_weekly_ranges(self.start_date, self.end_date)
             self.log(f"共生成 {len(self.weekly_ranges)} 个周时间范围")
             
             # 创建会话
@@ -824,33 +828,52 @@ try:
         
         def process_video(self, video_dir, bvid):
             """使用ffmpeg处理视频"""
-            # 查找下载的mp4文件
-            mp4_files = glob.glob(os.path.join(video_dir, "*.mp4"))
+            all_mp4_files = glob.glob(os.path.join(video_dir, "*.mp4"))
             
-            if not mp4_files:
+            if not all_mp4_files:
                 self.log(f"在 {video_dir} 中未找到MP4文件")
                 return False
+
+            input_file_to_process = None
+            # Prioritize a raw file (not ending with _final.mp4)
+            for f_path in all_mp4_files:
+                if not os.path.basename(f_path).endswith("_final.mp4"):
+                    input_file_to_process = f_path
+                    break
             
-            # 使用找到的第一个mp4文件
-            input_file = mp4_files[0]
-            
-            # 获取目录信息
-            dir_name = os.path.basename(video_dir)
-            # 获取文件名（不含扩展名）
-            base_filename = os.path.splitext(os.path.basename(input_file))[0]
-            
-            # 构建新的输出文件名，添加_final后缀
+            if not input_file_to_process:
+                # No raw files found. This means only _final.mp4 or _final_final.mp4 etc. exist.
+                # This state implies prior processing. We'll rely on _clean_non_final_files to ensure canonical state.
+                self.log(f"在 {video_dir} 中未找到原始MP4文件，可能已处理。执行清理。")
+                self._clean_non_final_files(video_dir)
+                # To be truly robust, we should check if a valid *_final.mp4 (and not *_final_final.mp4) exists after cleanup.
+                # For now, assume cleanup handles it.
+                # Let's find if a canonical final file exists after cleanup for a more definitive True/False
+                cleaned_files = glob.glob(os.path.join(video_dir, "*_final.mp4"))
+                non_double_final_cleaned_files = [f for f in cleaned_files if not os.path.basename(f).endswith("_final_final.mp4")]
+                if non_double_final_cleaned_files and os.path.getsize(non_double_final_cleaned_files[0]) > 0:
+                    return True
+                self.log(f"清理后 {video_dir} 未找到有效的final文件。")
+                return False
+
+            # Found a raw file to process
+            # Derive base_filename from the raw input file to avoid appending _final multiple times
+            base_filename = os.path.splitext(os.path.basename(input_file_to_process))[0]
+            # Safety check: if base_filename itself ended with _final (e.g. BBDown named it "video_final.mp4")
+            # This is unlikely given the BBDown file_pattern.
+            if base_filename.endswith("_final"):
+                 base_filename = base_filename[:-len("_final")]
+
             output_filename = f"{base_filename}_final.mp4"
             output_file = os.path.join(video_dir, output_filename)
             
-            # 检查如果输出文件已经存在，说明已经处理过了
+            # Check if the correctly named final output already exists
             if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
-                self.log(f"输出文件 {output_file} 已存在，跳过处理")
-                # 删除非final的文件
-                self._clean_non_final_files(video_dir)
+                self.log(f"输出文件 {output_file} 已存在，跳过处理。确保清理。")
+                self._clean_non_final_files(video_dir) # This will clean input_file_to_process and any other stragglers
                 return True
             
-            self.log(f"使用ffmpeg处理视频: {input_file} -> {output_file}")
+            self.log(f"使用ffmpeg处理视频: {input_file_to_process} -> {output_file}")
             
             for attempt in range(self.max_retries):
                 try:
@@ -860,7 +883,7 @@ try:
                     # 构建命令
                     cmd = [
                         self.ffmpeg_path,
-                        "-i", input_file,
+                        "-i", input_file_to_process,
                         "-c:v", "libx264",
                         "-preset", "medium",
                         "-crf", "23",
@@ -901,30 +924,58 @@ try:
             return False
         
         def _clean_non_final_files(self, directory):
-            """删除目录中所有不含final的视频文件"""
+            """删除目录中所有不含final的视频文件，并清理冗余的_final_final.mp4文件"""
             try:
-                # 获取目录中所有mp4文件
                 all_mp4_files = glob.glob(os.path.join(directory, "*.mp4"))
+                files_to_delete = []
+
+                # First, remove any *_final_final.mp4 files
+                # Iterate on a copy of the list if removing items while iterating
+                current_files_in_dir = list(all_mp4_files)
+                for f_path in current_files_in_dir:
+                    if os.path.basename(f_path).endswith("_final_final.mp4"):
+                        files_to_delete.append(f_path)
+                        if f_path in all_mp4_files: # Keep all_mp4_files list somewhat up-to-date for next steps
+                            all_mp4_files.remove(f_path)
                 
-                # 检查是否有final版本
-                final_files = [f for f in all_mp4_files if "_final.mp4" in f]
-                
-                if not final_files:
-                    self.log(f"警告：目录 {directory} 中没有找到final版本视频")
-                    return False
-                
-                # 筛选出不含final的文件
-                non_final_files = [f for f in all_mp4_files if "_final.mp4" not in f]
-                
-                # 删除这些文件
-                for file in non_final_files:
+                # Apply deletions for _final_final.mp4 first
+                for f_to_delete in files_to_delete:
                     try:
-                        os.remove(file)
-                        self.log(f"已删除非final文件: {file}")
+                        os.remove(f_to_delete)
+                        self.log(f"已删除冗余或双重处理文件: {f_to_delete}")
                     except Exception as e:
-                        self.log(f"删除文件 {file} 失败: {e}")
+                        self.log(f"删除文件 {f_to_delete} 失败: {e}")
                 
-                # 检查是否有其他临时文件（如.xml, .m4a等）
+                # Re-glob to get the current state after _final_final deletions
+                all_mp4_files = glob.glob(os.path.join(directory, "*.mp4"))
+                files_to_delete.clear() # Reset for next phase
+
+                # Identify canonical *_final.mp4 files
+                # A file is canonical if it ends with _final.mp4 but NOT _final_final.mp4
+                canonical_final_files = set()
+                for f_path in all_mp4_files:
+                    if os.path.basename(f_path).endswith("_final.mp4") and not os.path.basename(f_path).endswith("_final_final.mp4"):
+                        canonical_final_files.add(f_path)
+
+                if canonical_final_files:
+                    # If canonical final files exist, delete all other mp4s (which must be raw files)
+                    for f_path in all_mp4_files:
+                        if f_path not in canonical_final_files:
+                            files_to_delete.append(f_path)
+                else:
+                    # No canonical _final.mp4 files found. This might mean only raw files exist,
+                    # or BBDown failed, or ffmpeg failed. Let process_video handle this state.
+                    self.log(f"警告：在 {directory} 中未找到规范的 *_final.mp4 文件进行清理。")
+                    # Do not delete raw files if no final version exists.
+
+                for f_to_delete in list(set(files_to_delete)): # Use list(set()) to ensure unique paths
+                    try:
+                        os.remove(f_to_delete)
+                        self.log(f"已删除非final或冗余文件: {f_to_delete}")
+                    except Exception as e:
+                        self.log(f"删除文件 {f_to_delete} 失败: {e}")
+                
+                #检查是否有其他临时文件（如.xml, .m4a等）
                 other_temp_files = []
                 other_temp_files.extend(glob.glob(os.path.join(directory, "*.xml")))
                 other_temp_files.extend(glob.glob(os.path.join(directory, "*.m4a")))
@@ -1477,7 +1528,7 @@ try:
             except Exception as e:
                 self.log(f"删除目录失败: {e}")
         
-        def generate_weekly_timeframes(self, start_date_str="2024-03-09", end_date_str="2025-06-06"):
+        def generate_weekly_timeframes(self, start_date_str, end_date_str):
             """生成从起始日期到结束日期的每7天的时间范围"""
             # 将字符串转换为日期对象
             start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
@@ -1513,7 +1564,7 @@ try:
             
             return time_frames
         
-        def batch_download_all_videos(self, start_date="2024-03-09", end_date="2025-06-06"):
+        def batch_download_all_videos(self, start_date, end_date):
             """批量下载从起始日期到结束日期的所有视频，按7天为一个时间段"""
             self.log(f"批量下载从 {start_date} 到 {end_date} 的所有哈基米视频")
             
@@ -1657,7 +1708,7 @@ try:
         async def process_weekly_videos(self):
             """异步版本的周处理函数(为了保持兼容性)"""
             # 实际上直接调用同步版本
-            self.batch_download_all_videos()
+            self.batch_download_all_videos(self.start_date, self.end_date)
             return True
 
     async def main():
@@ -1752,7 +1803,7 @@ try:
             
             # 如果没有参数，默认执行批量下载从2022-11-19到2025-06-02的所有视频
             print("无参数模式，开始批量下载...")
-            crawler.batch_download_all_videos()
+            crawler.batch_download_all_videos(crawler.start_date, crawler.end_date)
         except Exception as e:
             print(f"主程序出错: {e}")
             traceback.print_exc()

@@ -374,3 +374,11 @@ debug_*.json
 /BBDown/*.mp4
 /BBDown/*.xml
 /BBDown/*.ass
+
+# Video files
+hachimi_videos/
+*.mp4
+*.flv
+*.mkv
+*.avi
+*.mov

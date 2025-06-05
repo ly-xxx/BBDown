@@ -329,3 +329,75 @@ API详细请参考[json-api-doc.md](./json-api-doc.md)
 * https://github.com/FFmpeg/FFmpeg
 * https://github.com/gpac/gpac
 * https://github.com/aria2/aria2
+
+# B站视频时间段搜索工具
+
+这个工具用于直接搜索B站特定时间段内的视频，使用B站API和时间戳进行精确筛选，而不是先搜索后手动过滤。
+
+## 功能
+
+- 支持使用UNIX时间戳直接按时间段搜索B站视频
+- 支持多关键词搜索，自动合并和去重结果
+- 结果按播放量排序，保存为CSV文件
+- 使用B站官方API，提高搜索精度和效率
+
+## 使用方法
+
+### 基本用法
+
+```
+py search_by_timeframe.py
+```
+
+这将使用默认关键词列表（"哈基米", "哈基咪", "哈吉咪", "哈吉米", "哈鸡米", "哈鸡咪"）搜索2022年11月19日至11月26日的视频。
+
+### 指定关键词
+
+```
+py search_by_timeframe.py 关键词1 关键词2 关键词3
+```
+
+例如：
+
+```
+py search_by_timeframe.py 哈基米 vup 哈基米直播
+```
+
+### 修改时间范围
+
+如需修改搜索的时间范围，请编辑脚本中的`TARGET_RANGE`变量：
+
+```python
+TARGET_RANGE = {
+    'begin_date': '2022-11-19',  # 开始日期
+    'end_date': '2022-11-26',    # 结束日期
+    'begin_timestamp': 1668787200,  # 开始日期的UNIX时间戳
+    'end_timestamp': 1669392000,    # 结束日期的UNIX时间戳
+}
+```
+
+可以使用在线工具将日期转换为UNIX时间戳：[https://www.unixtimestamp.com/](https://www.unixtimestamp.com/)
+
+## 输出文件
+
+搜索结果会保存在`search_results`目录下的CSV文件中：
+
+- 每个关键词的搜索结果：`bilibili_2022-11-19_2022-11-26.csv`
+- 所有关键词合并后的结果：`bilibili_all_2022-11-19_2022-11-26.csv`
+
+## 依赖项
+
+- requests
+- BeautifulSoup4
+
+可以使用以下命令安装依赖：
+
+```
+pip install requests beautifulsoup4
+```
+
+## 注意事项
+
+- 使用此脚本前，需要先使用BBDown登录B站账号
+- 过于频繁的请求可能会触发B站的反爬虫机制
+- 每个关键词的搜索结果会有5秒的延迟，以避免请求过快

@@ -99,7 +99,7 @@ try:
             self.session_file = "bili_session.pickle" # Use relative path, stored in CWD
             
             # ！！！！！！！！1改时间在这改
-            self.start_date = "2024-10-19"  # Default start date
+            self.start_date = "2025-04-05"  # Default start date
             self.end_date = "2025-06-06"    # Default end date
             self.re_encode_videos = False   # True: 重新编码视频(耗时但格式统一) / False: 仅重命名(速度快，保留原始质量)
             
@@ -1189,7 +1189,7 @@ try:
             
             # 页码
             page = 1
-            max_pages = 20  # 增加最大页码数，确保获取所有结果
+            max_pages = 100  # 增加最大页码数，确保获取所有结果
             has_more = True
             
             while page <= max_pages and has_more:

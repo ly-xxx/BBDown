@@ -99,8 +99,9 @@ try:
             self.session_file = "bili_session.pickle" # Use relative path, stored in CWD
             
             # ！！！！！！！！1改时间在这改
-            self.start_date = "2024-08-24"  # Default start date
+            self.start_date = "2024-10-19"  # Default start date
             self.end_date = "2025-06-06"    # Default end date
+            self.re_encode_videos = False   # True: 重新编码视频(耗时但格式统一) / False: 仅重命名(速度快，保留原始质量)
             
             # 登录状态
             self.is_logged_in = False
@@ -827,7 +828,7 @@ try:
             return bvid in self.downloaded_videos
         
         def process_video(self, video_dir, bvid):
-            """使用ffmpeg处理视频"""
+            """使用ffmpeg处理或重命名视频"""
             all_mp4_files = glob.glob(os.path.join(video_dir, "*.mp4"))
             
             if not all_mp4_files:
@@ -866,6 +867,22 @@ try:
 
             output_filename = f"{base_filename}_final.mp4"
             output_file = os.path.join(video_dir, output_filename)
+            
+            # If re-encoding is disabled, just rename the file and clean up.
+            if not self.re_encode_videos:
+                self.log(f"重新编码已禁用，重命名文件: {input_file_to_process} -> {output_file}")
+                try:
+                    # To mimic `ffmpeg -y`, remove destination if it exists to avoid errors.
+                    if os.path.exists(output_file):
+                        os.remove(output_file)
+                    shutil.move(input_file_to_process, output_file)
+                    self.log(f"重命名成功。")
+                    # After renaming, clean up any other stray files.
+                    self._clean_non_final_files(video_dir)
+                    return True
+                except Exception as e:
+                    self.log(f"重命名文件失败: {e}")
+                    return False
             
             # Check if the correctly named final output already exists
             if os.path.exists(output_file) and os.path.getsize(output_file) > 0:

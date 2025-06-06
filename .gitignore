@@ -412,3 +412,4 @@ bili_session.pickle
 ffmpeg-7.1.1-full_build/bin/*.exe
 ffmpeg-7.1.1-full_build/bin/*.dll
 ffmpeg-7.1.1-full_build/bin/*.pdb
+crawler_log.txt
